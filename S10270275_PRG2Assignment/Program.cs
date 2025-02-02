@@ -6,13 +6,143 @@ Console.WriteLine("testing");
 // yuxuan qn1,4,7,8
 
 // qn1
+public void LoadAirlines(string filePath)
+{
+    foreach (var line in File.ReadAllLines(filePath))
+    {
+        var parts = line.Split(',');
+        airlines[parts[0]] = new Airline(parts[0], parts[1]);
+        terminal.AddAirline(airlines[parts[0]]);
+    }
+    Console.WriteLine("Airlines loaded successfully.");
+}
 
+public void LoadBoardingGates(string filePath)
+{
+    foreach (var line in File.ReadAllLines(filePath))
+    {
+        var parts = line.Split(',');
+
+        string gateName = parts[0];
+        bool supportsCFFT = parts[1] == "true";
+        bool supportsDDJB = parts[2] == "true";
+        bool supportsLWTT = parts[3] == "true";
+
+        boardingGates[gateName] = new BoardingGate(gateName, supportsCFFT, supportsDDJB, supportsLWTT);
+        terminal.AddBoardingGate(boardingGates[gateName]);
+    }
+    Console.WriteLine("Boarding gates loaded successfully.");
+}
+
+public void LoadFlights(string filePath)
+{
+    foreach (var line in File.ReadAllLines(filePath))
+    {
+        var parts = line.Split(',');
+
+        string flightNumber = parts[0];
+        string airlineCode = parts[1];
+        string origin = parts[2];
+        string destination = parts[3];
+        string timeString = parts[4];
+        string status = parts[5];
+
+        DateTime expectedTime;
+        try
+        {
+            expectedTime = DateTime.Parse(timeString);
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine($"Invalid time format for flight {flightNumber}. Skipping this entry.");
+            continue;
+        }
+
+        flights[flightNumber] = new Flight(flightNumber, origin, destination, expectedTime, status);
+        if (airlines.ContainsKey(airlineCode))
+        {
+            airlines[airlineCode].AddFlight(flights[flightNumber]);
+        }
+        else
+        {
+            Console.WriteLine($"Airline code {airlineCode} not found for flight {flightNumber}. Skipping this entry.");
+            continue;
+        }
+
+        terminal.AddFlight(flights[flightNumber]);
+    }
+    Console.WriteLine("Flights loaded successfully.");
+}
 // qn4
-
+public void ListBoardingGates()
+{
+    foreach (var gate in boardingGates.Values)
+    {
+        Console.WriteLine(gate);
+    }
+}
 // qn7
+public void DisplayFlightsByAirline()
+{
+    Console.Write("Enter Airline Code: ");
+    string airlineCode = Console.ReadLine();
 
+    if (!airlines.ContainsKey(airlineCode))
+    {
+        Console.WriteLine("Airline not found.");
+        return;
+    }
+
+    var airline = airlines[airlineCode];
+    foreach (var flight in airline.Flights)
+    {
+        Console.WriteLine(flight);
+    }
+}
 // qn8
-
+public void ModifyFlightDetails()
+{
+    Console.Write("Enter Flight Number to modify: ");
+    string flightNumber = Console.ReadLine();
+    if (!flights.ContainsKey(flightNumber))
+    {
+        Console.WriteLine("Flight not found.");
+        return;
+    }
+    var flight = flights[flightNumber];
+    Console.Write("Enter new Origin (leave blank to keep current): ");
+    string origin = Console.ReadLine();
+    if (origin.Length > 0)
+    {
+        flight.Origin = origin;
+    }
+    Console.Write("Enter new Destination (leave blank to keep current): ");
+    string destination = Console.ReadLine();
+    if (destination.Length > 0)
+    {
+        flight.Destination = destination;
+    }
+    Console.Write("Enter new Expected Departure/Arrival Time (yyyy-MM-dd HH:mm) (leave blank to keep current): ");
+    string timeInput = Console.ReadLine();
+    if (timeInput.Length > 0)
+    {
+        DateTime newTime;
+        Console.Write("Confirm new time (yes/no): ");
+        string confirm = Console.ReadLine();
+        if (confirm == "yes")
+        {
+            newTime = DateTime.Parse(timeInput);
+            flight.ExpectedTime = newTime;
+        }
+    }
+    Console.Write("Enter new Status (leave blank to keep current): ");
+    string status = Console.ReadLine();
+    if (status.Length > 0)
+    {
+        flight.Status = status;
+    }
+    Console.WriteLine("Flight details updated successfully.");
+}
 
 
 // Kaiwen qn2,3,5,6,9
